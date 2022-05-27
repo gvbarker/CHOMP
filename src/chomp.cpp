@@ -1,0 +1,228 @@
+//      TODO : REFACTOR INQUOTES FUNCTION
+//             ADD FUNCTIONALITY FOR NEWER TOKENS AND/OR SPECIAL TOKENS
+//             CREATE COMMENTS FOR EASE OF UNDERSTANDING
+//             STREAMLINE FUNCTIONS
+//             UPDATE ANY BAD PRACTICES OR UNCLEAR SYNTAX
+//             GOAL : FULLY TOKENIZE colon.bas
+// 
+
+#include <iostream>
+#include <string>
+#include <map>
+#include <fstream>
+#include <chrono>
+using namespace std;
+char NULL_TERMINATOR = 0x00;
+char lineCount = 0x01;
+short STARTER_MEMORY = 0x0801;
+//list of C64 basic tokens
+map<string, int> tokens =     {
+                                    {"REM", 0x8F}, {":",0x3A},{"END", 0x80},{"FOR", 0x81},{"NEXT", 0x82},
+                                    {"DATA", 0x83},{"INPUT#", 0x84},{"INPUT", 0x85},{"DIM", 0x86},{"READ", 0x87},
+                                    {"LET", 0x88},{"GOTO", 0x89},{"RUN", 0x8A},{"IF", 0x8B},{"RESTORE", 0x8C},
+                                    {"GOSUB", 0x8D},{"RETURN", 0x8E},{"STOP", 0x90},{"ON", 0x91},{"WAIT", 0x92},
+                                    {"LOAD", 0x93},{"SAVE", 0x94},{"VERIFY", 0x95},{"DEF", 0x96},{"POKE", 0x97},
+                                    {"PRINT#", 0x98},{"PRINT", 0x99},{"CONT", 0x9A},{"LIST", 0x9B},{"CLR", 0x9C},
+                                    {"CMD", 0x9D},{"SYS", 0x9E},{"OPEN", 0x9F},{"CLOSE", 0xA0},{"GET", 0xA1},
+                                    {"NEW", 0xA2},{"TAB(", 0xA3},{"TO", 0xA4},{"FN", 0xA5},{"SPC(", 0xA6},
+                                    {"THEN", 0xA7},{"NOT", 0xA8},{"STEP", 0xA9},{"+", 0xAA},{"-", 0xAB},
+                                    {"*", 0xAC},{"/", 0xAD},{"^", 0xAE},{"AND", 0xAF},{"OR", 0xB0},
+                                    {">", 0xB1},{"=", 0xB2},{"<", 0xB3},{"SGN", 0xB4},{"ABS", 0xB6},
+                                    {"USR", 0xB7},{"FRE", 0xB8},{"POS", 0xB9},{"SQR", 0xBA},{"RND", 0xBB},
+                                    {"LOG", 0xBC},{"EXP", 0xBD},{"COS", 0xBE},{"SIN", 0xBF}, {"TAN", 0xC0},
+                                    {"ATN", 0xC1},{"PEEK", 0xC2},{"LEN", 0xC3},{"STR$", 0xC4},{"VAL", 0xC5},
+                                    {"ASC", 0xC6},{"CHR$", 0xC7},{"LEFT$", 0xC8},{"RIGHT$", 0xC9},{"MID$", 0xCA},
+                                    {"GO", 0xCB},{"INT", 0xB5},{"CONCAT",0xCC},{"DOPEN",0xCD},{"DCLOSE",0xCD},
+                                    {"RECORD",0xCF},{"HEADER",0xD0},{"COLLECT", 0xD1},{"BACKUP", 0xD2},{"COPY", 0xD3},
+                                    {"APPEND", 0xD4},{"DSAVE", 0xD5},{"DLOAD", 0xD6},{"CATALOG", 0xD7},
+                                    {"RENAME", 0xD8}
+                              };
+
+//CHECKS LEFT AND RIGHT OF START INDEX OF TOKEN FOR QUOTATION MARKS, TRUE IF INQUOTES, FALSE ELSE
+bool inQuotes(string keyString, int startIndex) {
+    int strIter = 0;
+    short qMarkFlag = 0;
+    while(strIter!=startIndex) {
+        if (keyString[strIter] == 0x22){
+            if(qMarkFlag==1) {
+                qMarkFlag = 0;
+            }
+            else {
+                qMarkFlag = 1;
+            }
+        }
+        strIter++;
+    }
+    if(qMarkFlag == 1) {
+        return true;
+    }
+    return false;
+}
+
+bool inRem(string keyString, int startIndex) {
+    size_t remarkFind = keyString.find("REM");
+    if(remarkFind!=string::npos) {
+        return true;
+    }
+    return false;
+}
+
+//SEARCHES LINE FOR KEY VALUES FOUND IN MAP "TOKENS" AND RETURNS START INDEX OF TOKEN KEYWORD 
+string keySearch(string searchString) {
+    auto mapIterator = tokens.begin();
+    size_t keyStart;
+    while(mapIterator != tokens.end()) {
+        keyStart = searchString.find(mapIterator->first);
+        if(keyStart!=string::npos && !inQuotes(searchString, keyStart)) {
+            if(mapIterator->first!="REM" && inRem(searchString,keyStart-1)) {
+                ++mapIterator;
+                continue;
+            }
+            if(mapIterator->first=="INT" && searchString[keyStart-1]=='R') {
+                ++mapIterator;
+                continue;
+            }
+            if(mapIterator->first=="GO" && searchString[keyStart+2]=='T') {
+                ++mapIterator;
+                continue;
+            }
+            if(mapIterator->first=="GO" && searchString[keyStart+2]=='S') {
+                ++mapIterator;
+                continue;
+            }
+            if(mapIterator->first=="PRINT" && searchString[keyStart+5]=='#') {
+                ++mapIterator;
+                continue;
+            }
+            break;
+        }
+        ++mapIterator;
+    }
+    if(keyStart==string::npos) {
+        return "NULL";
+    }
+    return mapIterator->first;
+}
+
+//RETURNS LINE NUMBER OF INPUT LINE
+short getLineNum(string line) {
+    int index=0;
+    string numString = "";
+    while(line[index]<=0x39 && line[index] >= 0x30) {
+        numString+=line[index];
+        index++;
+    }
+    return (short)stoi(numString);
+}
+
+//RETURNS STRING WITHOUT LINE NUMBER
+string remLineNum(string line) {
+    int index=0;
+    string substring = "";
+    while(line[index]<=0x39 && line[index] >= 0x30) {
+        line.erase(line.begin()+index);
+    }
+    return line;
+}
+
+short lowHighConcat(short high, short low) {
+    return (high * 256 + low);    
+}
+
+void tokenizer(string input, string outfile) {
+    fstream out(outfile, fstream::app | fstream::binary);
+    map<string, int>::iterator iterator;
+    string key = keySearch(input); 
+    int index=0;
+    if(key=="NULL") {
+        for(int i=0; i<input.size(); i++) {
+            if(input[i]==0xa) {                
+                out.write(reinterpret_cast<char*>(&NULL_TERMINATOR), sizeof(NULL_TERMINATOR));
+            }
+            else {
+                out.write(reinterpret_cast<char*>(&input[i]), sizeof(input[i]));
+            }
+        }
+        out.close();
+    }
+    else {
+        if(input.find(key)>0){
+            tokenizer(input.substr(0, input.find(key)), outfile);
+            tokenizer(input.substr(input.find(key)), outfile);
+        }
+        else {
+            iterator=tokens.find(key);
+            char val = iterator->second;
+            out.write(reinterpret_cast<char*>(&val), sizeof(val)); 
+            out.close();
+            while(index<(iterator->first).length()) {
+                index+=1;
+            }
+            tokenizer(input.substr(index), outfile);
+        }
+    }
+}
+
+//CHECKS THE END OF THE INPUT FILE FOR A CARRIAGE RETURN TERMINATOR AND APPENDS ONE IF DNE
+void terminatorAppend(string file) {
+    ifstream in(file);
+    ofstream out;
+    char fileChar;
+    while (in >> std::noskipws >> fileChar) {
+        if(in.peek()==fstream::traits_type::eof() && fileChar!='\n') {
+            out.open(file, fstream::app);
+            out << "\n";
+            out.close();
+        }
+    }
+    in.close();
+}
+
+//READS THE FILE CHARACTER BY CHARACTER, SENDS SINGLE LINES TO TOKENIZER
+void lineGrab(string infile, string outfile) {
+    terminatorAppend(infile);
+    char fileChar;            
+    string line;              
+    fstream out;
+    out.open(outfile, fstream::out | fstream::binary); 
+    out.write(reinterpret_cast<char*>(&STARTER_MEMORY), sizeof(STARTER_MEMORY));
+    out.close();
+    fstream in(infile);
+    while (in >> std::noskipws >> fileChar) {
+        line+=fileChar;
+        if(fileChar==0xA) {
+            out.open(outfile, fstream::app | fstream::binary); 
+            for(int i=0; i<line.size(); i++) {
+                line[i]=toupper(line[i]);
+            }
+            int lineIterator = 0;
+            while(remLineNum(line)[lineIterator] != 0xA) {
+                lineCount+=0x01;
+                lineIterator++;
+            }
+            short countEncode = lowHighConcat(0x08, lineCount);
+            out.write(reinterpret_cast<char*>(&countEncode), sizeof(countEncode));
+            short lineNumEncode = lowHighConcat(0x00, getLineNum(line));
+            out.write(reinterpret_cast<char*>(&lineNumEncode), sizeof(lineNumEncode));
+            out.close();
+            tokenizer(remLineNum(line), outfile);
+            line="";
+        }
+    }
+    out.open(outfile, fstream::app | fstream::binary);
+    out.write(reinterpret_cast<char*>(&NULL_TERMINATOR), sizeof(NULL_TERMINATOR));
+    out.write(reinterpret_cast<char*>(&NULL_TERMINATOR), sizeof(NULL_TERMINATOR));
+    out.close();                          
+    in.close();
+}
+
+
+int main(int argc, char * argv[]) {
+    auto start = chrono::steady_clock::now();
+    string inputFile = argv[1];  //.bas
+    string outputFile = argv[2]; //.prg
+    lineGrab(inputFile, outputFile);
+    auto end = chrono::steady_clock::now();
+    cout << chrono::duration_cast<chrono::milliseconds>(end-start).count() << endl;
+    return 0;
+}
