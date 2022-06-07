@@ -1,22 +1,21 @@
 //      TODO : REFACTOR INQUOTES FUNCTION
 //             ADD FUNCTIONALITY FOR NEWER TOKENS AND/OR SPECIAL TOKENS
-//             CREATE COMMENTS FOR EASE OF UNDERSTANDING
 //             STREAMLINE FUNCTIONS
-//             UPDATE ANY BAD PRACTICES OR UNCLEAR SYNTAX
 //             GOAL : FULLY TOKENIZE colon.bas
 // 
 
 #include <iostream>
+#include <vector>
 #include <string>
 #include <map>
 #include <fstream>
 #include <chrono>
-using namespace std;
 char NULL_TERMINATOR = 0x00;
 char lineCount = 0x01;
 short STARTER_MEMORY = 0x0801;
+
 //list of C64 basic tokens
-map<string, int> tokens =     {
+std::map<std::string, int> tokens =     {
                                     {"REM", 0x8F}, {":",0x3A},{"END", 0x80},{"FOR", 0x81},{"NEXT", 0x82},
                                     {"DATA", 0x83},{"INPUT#", 0x84},{"INPUT", 0x85},{"DIM", 0x86},{"READ", 0x87},
                                     {"LET", 0x88},{"GOTO", 0x89},{"RUN", 0x8A},{"IF", 0x8B},{"RESTORE", 0x8C},
@@ -39,7 +38,7 @@ map<string, int> tokens =     {
                               };
 
 //CHECKS LEFT AND RIGHT OF START INDEX OF TOKEN FOR QUOTATION MARKS, TRUE IF INQUOTES, FALSE ELSE
-bool inQuotes(string keyString, int startIndex) {
+bool inQuotes(std::string keyString, int startIndex) {
     int strIter = 0;
     short qMarkFlag = 0;
     while(strIter!=startIndex) {
@@ -59,21 +58,21 @@ bool inQuotes(string keyString, int startIndex) {
     return false;
 }
 
-bool inRem(string keyString, int startIndex) {
+bool inRem(std::string keyString, int startIndex) {
     size_t remarkFind = keyString.find("REM");
-    if(remarkFind!=string::npos) {
+    if(remarkFind!=std::string::npos) {
         return true;
     }
     return false;
 }
 
 //SEARCHES LINE FOR KEY VALUES FOUND IN MAP "TOKENS" AND RETURNS START INDEX OF TOKEN KEYWORD 
-string keySearch(string searchString) {
+std::string keySearch(std::string searchString) {
     auto mapIterator = tokens.begin();
     size_t keyStart;
     while(mapIterator != tokens.end()) {
         keyStart = searchString.find(mapIterator->first);
-        if(keyStart!=string::npos && !inQuotes(searchString, keyStart)) {
+        if(keyStart!=std::string::npos && !inQuotes(searchString, keyStart)) {
             if(mapIterator->first!="REM" && inRem(searchString,keyStart-1)) {
                 ++mapIterator;
                 continue;
@@ -98,27 +97,27 @@ string keySearch(string searchString) {
         }
         ++mapIterator;
     }
-    if(keyStart==string::npos) {
+    if(keyStart==std::string::npos) {
         return "NULL";
     }
     return mapIterator->first;
 }
 
 //RETURNS LINE NUMBER OF INPUT LINE
-short getLineNum(string line) {
+short getLineNum(std::string line) {
     int index=0;
-    string numString = "";
+    std::string numString = "";
     while(line[index]<=0x39 && line[index] >= 0x30) {
         numString+=line[index];
         index++;
     }
-    return (short)stoi(numString);
+    return (short)std::stoi(numString);
 }
 
 //RETURNS STRING WITHOUT LINE NUMBER
-string remLineNum(string line) {
+std::string remLineNum(std::string line) {
     int index=0;
-    string substring = "";
+    std::string substring = "";
     while(line[index]<=0x39 && line[index] >= 0x30) {
         line.erase(line.begin()+index);
     }
@@ -129,10 +128,10 @@ short lowHighConcat(short high, short low) {
     return (high * 256 + low);    
 }
 
-void tokenizer(string input, string outfile) {
-    fstream out(outfile, fstream::app | fstream::binary);
-    map<string, int>::iterator iterator;
-    string key = keySearch(input); 
+void tokenizer(std::string input, std::string outfile) {
+    std::fstream out(outfile, std::fstream::app | std::fstream::binary);
+    std::map<std::string, int>::iterator iterator;
+    std::string key = keySearch(input); 
     int index=0;
     if(key=="NULL") {
         for(int i=0; i<input.size(); i++) {
@@ -164,13 +163,13 @@ void tokenizer(string input, string outfile) {
 }
 
 //CHECKS THE END OF THE INPUT FILE FOR A CARRIAGE RETURN TERMINATOR AND APPENDS ONE IF DNE
-void terminatorAppend(string file) {
-    ifstream in(file);
-    ofstream out;
+void terminatorAppend(std::string file) {
+    std::ifstream in(file);
+    std::ofstream out;
     char fileChar;
     while (in >> std::noskipws >> fileChar) {
-        if(in.peek()==fstream::traits_type::eof() && fileChar!='\n') {
-            out.open(file, fstream::app);
+        if(in.peek()==std::fstream::traits_type::eof() && fileChar!='\n') {
+            out.open(file, std::fstream::app);
             out << "\n";
             out.close();
         }
@@ -179,19 +178,19 @@ void terminatorAppend(string file) {
 }
 
 //READS THE FILE CHARACTER BY CHARACTER, SENDS SINGLE LINES TO TOKENIZER
-void lineGrab(string infile, string outfile) {
+void lineGrab(std::string infile, std::string outfile) {
     terminatorAppend(infile);
     char fileChar;            
-    string line;              
-    fstream out;
-    out.open(outfile, fstream::out | fstream::binary); 
+    std::string line;              
+    std::fstream out;
+    out.open(outfile, std::fstream::out | std::fstream::binary); 
     out.write(reinterpret_cast<char*>(&STARTER_MEMORY), sizeof(STARTER_MEMORY));
     out.close();
-    fstream in(infile);
+    std::fstream in(infile);
     while (in >> std::noskipws >> fileChar) {
         line+=fileChar;
         if(fileChar==0xA) {
-            out.open(outfile, fstream::app | fstream::binary); 
+            out.open(outfile, std::fstream::app | std::fstream::binary); 
             for(int i=0; i<line.size(); i++) {
                 line[i]=toupper(line[i]);
             }
@@ -209,7 +208,7 @@ void lineGrab(string infile, string outfile) {
             line="";
         }
     }
-    out.open(outfile, fstream::app | fstream::binary);
+    out.open(outfile, std::fstream::app | std::fstream::binary);
     out.write(reinterpret_cast<char*>(&NULL_TERMINATOR), sizeof(NULL_TERMINATOR));
     out.write(reinterpret_cast<char*>(&NULL_TERMINATOR), sizeof(NULL_TERMINATOR));
     out.close();                          
@@ -218,11 +217,8 @@ void lineGrab(string infile, string outfile) {
 
 
 int main(int argc, char * argv[]) {
-    auto start = chrono::steady_clock::now();
-    string inputFile = argv[1];  //.bas
-    string outputFile = argv[2]; //.prg
+    std::string inputFile = argv[1];  //.bas
+    std::string outputFile = argv[2]; //.prg
     lineGrab(inputFile, outputFile);
-    auto end = chrono::steady_clock::now();
-    cout << chrono::duration_cast<chrono::milliseconds>(end-start).count() << endl;
     return 0;
 }
