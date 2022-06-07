@@ -178,47 +178,71 @@ void terminatorAppend(std::string file) {
 }
 
 //READS THE FILE CHARACTER BY CHARACTER, SENDS SINGLE LINES TO TOKENIZER
-void lineGrab(std::string infile, std::string outfile) {
-    terminatorAppend(infile);
+// std::vector<std::string> lineGrabOriginal(std::string infile, std::string outfile) {
+//     char fileChar;            
+//     std::string line;
+//     std::vector<std::string> contents;
+//     //take this and move it to a 'write' function
+//     std::fstream out;
+//     out.open(outfile, std::fstream::out | std::fstream::binary); 
+//     out.write(reinterpret_cast<char*>(&STARTER_MEMORY), sizeof(STARTER_MEMORY));
+//     out.close();
+//     std::fstream in(infile);
+//     while (in >> std::noskipws >> fileChar) {
+//         line+=fileChar;
+//         if(fileChar==0xA) {
+//             out.open(outfile, std::fstream::app | std::fstream::binary); 
+//             for(int i=0; i<line.size(); i++) {
+//                 line[i]=toupper(line[i]);
+//             }
+//             int lineIterator = 0;
+//             while(remLineNum(line)[lineIterator] != 0xA) {
+//                 lineCount+=0x01;
+//                 lineIterator++;
+//             }
+//             short countEncode = lowHighConcat(0x08, lineCount);
+//             out.write(reinterpret_cast<char*>(&countEncode), sizeof(countEncode));
+//             short lineNumEncode = lowHighConcat(0x00, getLineNum(line));
+//             out.write(reinterpret_cast<char*>(&lineNumEncode), sizeof(lineNumEncode));
+//             out.close();
+//             tokenizer(remLineNum(line), outfile);
+//             line="";
+//         }
+//     }
+//     out.open(outfile, std::fstream::app | std::fstream::binary);
+//     out.write(reinterpret_cast<char*>(&NULL_TERMINATOR), sizeof(NULL_TERMINATOR));
+//     out.write(reinterpret_cast<char*>(&NULL_TERMINATOR), sizeof(NULL_TERMINATOR));
+//     out.close();                          
+//     in.close();
+// }
+
+std::vector<std::string> fParseAndSplit(std::string infile) {
     char fileChar;            
-    std::string line;              
-    std::fstream out;
-    out.open(outfile, std::fstream::out | std::fstream::binary); 
-    out.write(reinterpret_cast<char*>(&STARTER_MEMORY), sizeof(STARTER_MEMORY));
-    out.close();
+    std::string line;
+    std::vector<std::string> contents;
     std::fstream in(infile);
     while (in >> std::noskipws >> fileChar) {
         line+=fileChar;
         if(fileChar==0xA) {
-            out.open(outfile, std::fstream::app | std::fstream::binary); 
             for(int i=0; i<line.size(); i++) {
                 line[i]=toupper(line[i]);
             }
-            int lineIterator = 0;
-            while(remLineNum(line)[lineIterator] != 0xA) {
-                lineCount+=0x01;
-                lineIterator++;
-            }
-            short countEncode = lowHighConcat(0x08, lineCount);
-            out.write(reinterpret_cast<char*>(&countEncode), sizeof(countEncode));
-            short lineNumEncode = lowHighConcat(0x00, getLineNum(line));
-            out.write(reinterpret_cast<char*>(&lineNumEncode), sizeof(lineNumEncode));
-            out.close();
-            tokenizer(remLineNum(line), outfile);
+            contents.push_back(line);
             line="";
         }
     }
-    out.open(outfile, std::fstream::app | std::fstream::binary);
-    out.write(reinterpret_cast<char*>(&NULL_TERMINATOR), sizeof(NULL_TERMINATOR));
-    out.write(reinterpret_cast<char*>(&NULL_TERMINATOR), sizeof(NULL_TERMINATOR));
-    out.close();                          
     in.close();
+    return contents;
 }
-
 
 int main(int argc, char * argv[]) {
     std::string inputFile = argv[1];  //.bas
     std::string outputFile = argv[2]; //.prg
-    lineGrab(inputFile, outputFile);
+    std::vector<std::string> bProgram;
+    terminatorAppend(inputFile);
+    bProgram = fParseAndSplit(inputFile);
+    for(int i = 0; i < bProgram.size(); i++) {
+        std::cout << bProgram.at(i) << " ";
+    }
     return 0;
 }
