@@ -235,14 +235,25 @@ std::vector<std::string> fParseAndSplit(std::string infile) {
     return contents;
 }
 
+void fileValidation(std::string inputFile, std::string outputFile) {
+    if(false) {
+        throw std::invalid_argument("File already exists.");
+    }
+}
+
 int main(int argc, char * argv[]) {
+    if (argc==1) {
+        std::cout << "\nCHOMP C64 Tokenizer\n===================\n-h for help.\n\n";
+        exit(0);
+    }
     std::string inputFile = argv[1];  //.bas
     std::string outputFile = argv[2]; //.prg
+    fileValidation(inputFile,outputFile);
     std::vector<std::string> bProgram;
     terminatorAppend(inputFile);
     bProgram = fParseAndSplit(inputFile);
-    for(int i = 0; i < bProgram.size(); i++) {
-        std::cout << bProgram.at(i) << " ";
+    for(int i=0; i<bProgram.size();i++) {
+        std::cout << bProgram.at(i);
     }
     return 0;
 }
