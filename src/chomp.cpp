@@ -170,6 +170,9 @@ void tokenizer(std::string input, std::string outfile) {
 //CHECKS THE END OF THE INPUT FILE FOR A CARRIAGE RETURN TERMINATOR AND APPENDS ONE IF DNE
 void terminatorAppend(std::string file) {
     std::ifstream in(file);
+    if (!in) {
+        std::cout << " Nope.";
+    }
     std::ofstream out;
     char fileChar;
     while (in >> std::noskipws >> fileChar) {
@@ -239,7 +242,7 @@ std::vector<std::string> fParseAndSplit(std::string inputFile) {
     in.close();
     return contents;
 }
-
+//TODO: FINISH THIS
 void CLIValidation(int argc, char * argv[]) {
     //std::cout << argv[1] << std::endl;
     if (argc > 10) {
@@ -275,14 +278,15 @@ chomp <PATH_TO_FILE1> -o <PATH_TO_FILE2>\tOverwrite file2 if file2 exists.\n\n";
 }
 
 int main(int argc, char * argv[]) {
-    CLIValidation(argc,argv);
-    // std::string inputFile = argv[1];  //.bas
-    // std::string outputFile = argv[2]; //.prg
-    // std::vector<std::string> bProgram;
-    // terminatorAppend(inputFile);
-    // bProgram = fParseAndSplit(inputFile);
-    // for(int i=0; i<bProgram.size();i++) {
-    //    std::cout << bProgram.at(i);
-    // }
+    //CLIValidation(argc,argv);
+    std::string inputFile = argv[1];  //.bas
+    std::string outputFile = argv[2]; //.prg
+    std::cout << inputFile+" "+outputFile+"\n";
+    std::vector<std::string> bProgram;
+    terminatorAppend(inputFile);
+    bProgram = fParseAndSplit(inputFile);
+    for(int i=0; i<bProgram.size();i++) {
+        std::cout << bProgram.at(i);
+    }
     return 0;
 }
