@@ -7,13 +7,18 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <cstring>
 #include <map>
 #include <fstream>
 #include <chrono>
+std::string VERSION_NUMBER = "v1.1.0";
+bool VERBOSE = false;
+bool OVERWRITE = false; 
 char NULL_TERMINATOR = 0x00;
 char lineCount = 0x01;
 short STARTER_MEMORY = 0x0801;
-
+std::string INPUT_FILE;
+std::string OUTPUT_FILE;
 //list of C64 basic tokens
 std::map<std::string, int> tokens =     {
                                     {"REM", 0x8F}, {":",0x3A},{"END", 0x80},{"FOR", 0x81},{"NEXT", 0x82},
@@ -216,11 +221,11 @@ void terminatorAppend(std::string file) {
 //     in.close();
 // }
 
-std::vector<std::string> fParseAndSplit(std::string infile) {
+std::vector<std::string> fParseAndSplit(std::string inputFile) {
     char fileChar;            
     std::string line;
     std::vector<std::string> contents;
-    std::fstream in(infile);
+    std::ifstream in(inputFile);
     while (in >> std::noskipws >> fileChar) {
         line+=fileChar;
         if(fileChar==0xA) {
@@ -235,25 +240,49 @@ std::vector<std::string> fParseAndSplit(std::string infile) {
     return contents;
 }
 
-void fileValidation(std::string inputFile, std::string outputFile) {
-    if(false) {
-        throw std::invalid_argument("File already exists.");
+void CLIValidation(int argc, char * argv[]) {
+    //std::cout << argv[1] << std::endl;
+    if (argc > 10) {
+        std::cout << "CHOMP: Error. Too many input parameters.\n\n";
     }
+    if (argc == 1) {
+        std::cout << "=======================\n| CHOMP C64 Tokenizer |\n=======================\n-h for help.\n\n";
+        exit(0);
+    }
+    if (strcmp(argv[1],"-h")==0||strcmp(argv[1],"--help")==0) {
+        std::cout << "\nUsage:\n\n\
+chomp -h, --help\t\t\t\tCommand help\n\
+chomp --v, -version\t\t\t\tVersion\n\
+chomp <PATH_TO_FILE1> <PATH_TO_FILE2>\t\tTokenize file1, output binary to file 2\n\
+\nTokenizer Flags:\n\n\
+chomp <PATH_TO_FILE1> -v <PATH_TO_FILE2>\tVerbose\n\
+chomp <PATH_TO_FILE1> -o <PATH_TO_FILE2>\tOverwrite file2 if file2 exists.\n\n";
+        exit(0);
+    }
+    else if (std::strcmp(argv[1],"-v")==0||strcmp(argv[1],"--version")==0) {
+        std::cout << VERSION_NUMBER + "\n";  
+        exit(0);
+    }
+    else {
+        std::ifstream inCheck(argv[1]);
+        if (!inCheck) {
+            std::cout << "CHOMP: Error. could not open input file.\n\n";
+            exit(1);
+        }
+
+    }
+
 }
 
 int main(int argc, char * argv[]) {
-    if (argc==1) {
-        std::cout << "\nCHOMP C64 Tokenizer\n===================\n-h for help.\n\n";
-        exit(0);
-    }
-    std::string inputFile = argv[1];  //.bas
-    std::string outputFile = argv[2]; //.prg
-    fileValidation(inputFile,outputFile);
-    std::vector<std::string> bProgram;
-    terminatorAppend(inputFile);
-    bProgram = fParseAndSplit(inputFile);
-    for(int i=0; i<bProgram.size();i++) {
-        std::cout << bProgram.at(i);
-    }
+    CLIValidation(argc,argv);
+    // std::string inputFile = argv[1];  //.bas
+    // std::string outputFile = argv[2]; //.prg
+    // std::vector<std::string> bProgram;
+    // terminatorAppend(inputFile);
+    // bProgram = fParseAndSplit(inputFile);
+    // for(int i=0; i<bProgram.size();i++) {
+    //    std::cout << bProgram.at(i);
+    // }
     return 0;
 }
