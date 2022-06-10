@@ -42,6 +42,12 @@ std::map<std::string, int> tokens =     {
                                     {"RENAME", 0xD8}
                               };
 
+void print(std::vector<std::string> vec) {
+    for(int i=0; i<vec.size();i++) {
+        std::cout << vec.at(i);
+    }
+}
+
 //CHECKS LEFT AND RIGHT OF START INDEX OF TOKEN FOR QUOTATION MARKS, TRUE IF INQUOTES, FALSE ELSE
 bool inQuotes(std::string keyString, int startIndex) {
     int strIter = 0;
@@ -281,12 +287,9 @@ int main(int argc, char * argv[]) {
     //CLIValidation(argc,argv);
     std::string inputFile = argv[1];  //.bas
     std::string outputFile = argv[2]; //.prg
-    std::cout << inputFile+" "+outputFile+"\n";
     std::vector<std::string> bProgram;
     terminatorAppend(inputFile);
     bProgram = fParseAndSplit(inputFile);
-    for(int i=0; i<bProgram.size();i++) {
-        std::cout << bProgram.at(i);
-    }
+    print(bProgram);
     return 0;
 }
