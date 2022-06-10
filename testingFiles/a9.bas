@@ -7,4 +7,3 @@
 30 fori=1024to2023:pokei,3:next
 40 forx=axtobxstep.5
 60 y=int(m*x)+z
-70 ch=
