@@ -11,14 +11,16 @@
 #include <map>
 #include <fstream>
 #include <chrono>
-std::string VERSION_NUMBER = "v1.1.0";
+const std::string VERSION_NUMBER = "v1.1.0";
 bool VERBOSE = false;
 bool OVERWRITE = false; 
 char NULL_TERMINATOR = 0x00;
 char lineCount = 0x01;
-short STARTER_MEMORY = 0x0801;
+short MEM_ENTRY_POINT = 0x0801;
+short MEM_EXIT_POINT = 0x0000;
 std::string INPUT_FILE;
 std::string OUTPUT_FILE;
+
 //list of C64 basic tokens
 std::map<std::string, int> tokens =     {
                                     {"REM", 0x8F}, {":",0x3A},{"END", 0x80},{"FOR", 0x81},{"NEXT", 0x82},
@@ -42,6 +44,7 @@ std::map<std::string, int> tokens =     {
                                     {"RENAME", 0xD8}
                               };
 
+//? general purpose print function -- overload this as needed
 void print(std::vector<std::string> vec) {
     for(int i=0; i<vec.size();i++) {
         std::cout << vec.at(i);
@@ -172,8 +175,23 @@ void tokenizer(std::string input, std::string outfile) {
         }
     }
 }
+void fWriter(std::string outputFile, std::vector<char[]>) {
+    std::fstream binOut(outputFile,std::fstream::out | std::fstream::binary);
+    binOut.write(reinterpret_cast<char*>(&MEM_ENTRY_POINT),sizeof(MEM_ENTRY_POINT));
 
-//CHECKS THE END OF THE INPUT FILE FOR A CARRIAGE RETURN TERMINATOR AND APPENDS ONE IF DNE
+
+
+    binOut.write(reinterpret_cast<char*>(&MEM_EXIT_POINT),sizeof(MEM_EXIT_POINT));
+    binOut.close();
+}
+std::vector<char[]> tokenize(std::vector<std::string>){
+    std::vector<char[]> tokenContent;
+    
+
+    return tokenContent;
+}
+
+//Appends a CR to the end of the file if not present -- helps tokenizer
 void terminatorAppend(std::string file) {
     std::ifstream in(file);
     if (!in) {
@@ -191,24 +209,13 @@ void terminatorAppend(std::string file) {
     in.close();
 }
 
-//READS THE FILE CHARACTER BY CHARACTER, SENDS SINGLE LINES TO TOKENIZER
-// std::vector<std::string> lineGrabOriginal(std::string infile, std::string outfile) {
-//     char fileChar;            
-//     std::string line;
-//     std::vector<std::string> contents;
-//     //take this and move it to a 'write' function
-//     std::fstream out;
-//     out.open(outfile, std::fstream::out | std::fstream::binary); 
-//     out.write(reinterpret_cast<char*>(&STARTER_MEMORY), sizeof(STARTER_MEMORY));
-//     out.close();
-//     std::fstream in(infile);
-//     while (in >> std::noskipws >> fileChar) {
-//         line+=fileChar;
-//         if(fileChar==0xA) {
-//             out.open(outfile, std::fstream::app | std::fstream::binary); 
-//             for(int i=0; i<line.size(); i++) {
-//                 line[i]=toupper(line[i]);
-//             }
+//?     while (in >> std::noskipws >> fileChar) {
+//?         line+=fileChar;
+//?         if(fileChar==0xA) {
+//?             out.open(outfile, std::fstream::app | std::fstream::binary); 
+//?             for(int i=0; i<line.size(); i++) {
+//?                 line[i]=toupper(line[i]);
+//?             }
 //             int lineIterator = 0;
 //             while(remLineNum(line)[lineIterator] != 0xA) {
 //                 lineCount+=0x01;
@@ -230,7 +237,8 @@ void terminatorAppend(std::string file) {
 //     in.close();
 // }
 
-std::vector<std::string> fParseAndSplit(std::string inputFile) {
+//parses input file, breaks into line-by-line, returns as vector<string>
+std::vector<std::string> fReaderSplitter(std::string inputFile) {
     char fileChar;            
     std::string line;
     std::vector<std::string> contents;
@@ -248,6 +256,7 @@ std::vector<std::string> fParseAndSplit(std::string inputFile) {
     in.close();
     return contents;
 }
+
 //TODO: FINISH THIS
 void CLIValidation(int argc, char * argv[]) {
     //std::cout << argv[1] << std::endl;
@@ -285,11 +294,13 @@ chomp <PATH_TO_FILE1> -o <PATH_TO_FILE2>\tOverwrite file2 if file2 exists.\n\n";
 
 int main(int argc, char * argv[]) {
     //CLIValidation(argc,argv);
+    
     std::string inputFile = argv[1];  //.bas
     std::string outputFile = argv[2]; //.prg
-    std::vector<std::string> bProgram;
     terminatorAppend(inputFile);
-    bProgram = fParseAndSplit(inputFile);
-    print(bProgram);
+
+    std::vector<std::string> bProgram = fReaderSplitter(inputFile);
+    std::vector<char[]> tProgram = tokenize(bProgram);
+    fWriter(outputFile, tProgram);
     return 0;
 }
