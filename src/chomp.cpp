@@ -5,6 +5,7 @@
 // 
 
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <string>
 #include <cstring>
@@ -45,11 +46,31 @@ std::map<std::string, int> tokens =     {
                               };
 
 //? general purpose print function -- overload this as needed
-void print(std::vector<std::string> vec) {
-    for(int i=0; i<vec.size();i++) {
-        std::cout << vec.at(i);
+void print(std::vector<std::string> vec, int valType) {
+    //0 for standard, 1 for hex
+    switch (valType)
+    {
+    case 0:
+        for(int i=0; i<vec.size();i++) {
+            std::cout << vec.at(i);
+        }    
+        break;
+    case 1:
+        for(int i=0; i<vec.size();i++) {
+            for(int j=0;j<vec.at(i).size();j++) {
+                std::cout << std::hex << (int) vec.at(i)[j] <<" ";
+            }
+        }
+        break;
+    case 2:
+        
+        break;
+    
+    default:
+        break;
     }
 }
+
 
 //CHECKS LEFT AND RIGHT OF START INDEX OF TOKEN FOR QUOTATION MARKS, TRUE IF INQUOTES, FALSE ELSE
 bool inQuotes(std::string keyString, int startIndex) {
@@ -175,6 +196,7 @@ void tokenizer(std::string input, std::string outfile) {
         }
     }
 }
+
 void fWriter(std::string outputFile, std::vector<char[]>) {
     std::fstream binOut(outputFile,std::fstream::out | std::fstream::binary);
     binOut.write(reinterpret_cast<char*>(&MEM_ENTRY_POINT),sizeof(MEM_ENTRY_POINT));
@@ -184,9 +206,10 @@ void fWriter(std::string outputFile, std::vector<char[]>) {
     binOut.write(reinterpret_cast<char*>(&MEM_EXIT_POINT),sizeof(MEM_EXIT_POINT));
     binOut.close();
 }
-std::vector<char[]> tokenize(std::vector<std::string>){
-    std::vector<char[]> tokenContent;
-    
+
+std::vector<char> tokenize(std::vector<std::string> basicContent){
+    std::vector<char> tokenContent;
+    short characterCount, lineNum = 0x0000;
 
     return tokenContent;
 }
@@ -209,14 +232,7 @@ void terminatorAppend(std::string file) {
     in.close();
 }
 
-//?     while (in >> std::noskipws >> fileChar) {
-//?         line+=fileChar;
-//?         if(fileChar==0xA) {
-//?             out.open(outfile, std::fstream::app | std::fstream::binary); 
-//?             for(int i=0; i<line.size(); i++) {
-//?                 line[i]=toupper(line[i]);
-//?             }
-//             int lineIterator = 0;
+
 //             while(remLineNum(line)[lineIterator] != 0xA) {
 //                 lineCount+=0x01;
 //                 lineIterator++;
@@ -298,9 +314,8 @@ int main(int argc, char * argv[]) {
     std::string inputFile = argv[1];  //.bas
     std::string outputFile = argv[2]; //.prg
     terminatorAppend(inputFile);
-
     std::vector<std::string> bProgram = fReaderSplitter(inputFile);
-    std::vector<char[]> tProgram = tokenize(bProgram);
-    fWriter(outputFile, tProgram);
+    //std::vector<char[]> tProgram = tokenize(bProgram);
+    //fWriter(outputFile, tProgram);
     return 0;
 }
