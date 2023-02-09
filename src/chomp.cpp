@@ -23,7 +23,7 @@ std::string INPUT_FILE;
 std::string OUTPUT_FILE;
 
 //list of C64 basic tokens
-std::map<std::string, int> tokens =     {
+std::map<std::string, int> tokens = {
                                     {"REM", 0x8F}, {":",0x3A},{"END", 0x80},{"FOR", 0x81},{"NEXT", 0x82},
                                     {"DATA", 0x83},{"INPUT#", 0x84},{"INPUT", 0x85},{"DIM", 0x86},{"READ", 0x87},
                                     {"LET", 0x88},{"GOTO", 0x89},{"RUN", 0x8A},{"IF", 0x8B},{"RESTORE", 0x8C},
@@ -43,11 +43,10 @@ std::map<std::string, int> tokens =     {
                                     {"RECORD",0xCF},{"HEADER",0xD0},{"COLLECT", 0xD1},{"BACKUP", 0xD2},{"COPY", 0xD3},
                                     {"APPEND", 0xD4},{"DSAVE", 0xD5},{"DLOAD", 0xD6},{"CATALOG", 0xD7},
                                     {"RENAME", 0xD8}
-                              };
+                                    };
 
 //? general purpose print function -- overload this as needed
 void print(std::vector<std::string> vec, int valType) {
-    //0 for standard, 1 for hex
     switch (valType)
     {
     case 0:
@@ -63,9 +62,7 @@ void print(std::vector<std::string> vec, int valType) {
         }
         break;
     case 2:
-        
         break;
-    
     default:
         break;
     }
@@ -215,10 +212,10 @@ std::vector<char> tokenize(std::vector<std::string> basicContent){
 }
 
 //Appends a CR to the end of the file if not present -- helps tokenizer
-void terminatorAppend(std::string file) {
+void validateInFile(std::string file) {
     std::ifstream in(file);
     if (!in) {
-        std::cout << " Nope.";
+        std::cout << "File does not exist: " << file;
     }
     std::ofstream out;
     char fileChar;
@@ -309,11 +306,10 @@ chomp <PATH_TO_FILE1> -o <PATH_TO_FILE2>\tOverwrite file2 if file2 exists.\n\n";
 }
 
 int main(int argc, char * argv[]) {
-    //CLIValidation(argc,argv);
-    
+    //CLIValidation(argc,argv);    
     std::string inputFile = argv[1];  //.bas
     std::string outputFile = argv[2]; //.prg
-    terminatorAppend(inputFile);
+    //validateInFile(inputFile);
     std::vector<std::string> bProgram = fReaderSplitter(inputFile);
     //std::vector<char[]> tProgram = tokenize(bProgram);
     //fWriter(outputFile, tProgram);
