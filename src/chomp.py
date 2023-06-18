@@ -1,8 +1,7 @@
-import os,sys,struct
+import os,struct
 class tokenizer():
     def __init__(self, infile, outfile, flags):
         self.flags = flags
-        self.nullterm, self.linecount = 0x00, 0x01
         self.memoryEntryPoint, self.memoryExitPoint = 0x0801, 0x0000
         self.overwrite = False
         try:
@@ -65,21 +64,90 @@ class tokenizer():
 
 
     def tokenize(self):
-        for line in self.originalContent:
+        for i in range(len(self.originalContent)):
+            if(not self.originalContent[i].strip()):
+                continue
+            lineNum,lineContent = self.__stripLineNumber(self.originalContent[i], i)
+            lineContent = self.__tokenizeLine(lineContent)
+            self.tokenizedContent.append((lineNum,lineContent))
+        self.__writeToOuputFile()
 
-            tokenizedLine = self.tokenizeLine(line)
-            self.tokenizedContent.append(self.tokenizeLine(line))
-        for i in self.tokenizedContent:
-            print(i)
-            print()
+    def __tokenizeLine(self, line):
+        line = line.upper()
+        noQuotedMaterial = self.__removeQuotedMaterial(line)
+        tokenizedLine = []
 
-    def addLines(self):
-        pass
+        if ("REM" in noQuotedMaterial):
+            commentLine = self.__convertToList(noQuotedMaterial.replace("REM",""))
+            tokenizedLine.extend([0x8F])
+            tokenizedLine.extend(commentLine)
+            return tokenizedLine
+        if (':' in noQuotedMaterial):
+            split = line.index(':')
+            left, right = line[0:split], line[split+1:]
+            splitLeft, splitRight = self.__tokenizeLine(left), self.__tokenizeLine(right)
+            tokenizedLine.extend(splitLeft)
+            tokenizedLine.extend([ord(":")])
+            tokenizedLine.extend(splitRight)
+            tokenizedLine = [i for i in tokenizedLine if i!='']
+            return tokenizedLine
 
-    def __stripLineNumber(self, line):
-        pass
+        for i in range(len(self.keywords)):
+            currKeyword = self.keywords[i] 
+            if currKeyword in noQuotedMaterial:
+                split = line.index(currKeyword)
+                left, right = line[0:split], line[split+len(currKeyword):]
+                tokeLeft, tokeRight = self.__tokenizeLine(left), self.__tokenizeLine(right)
+                tokenizedLine.extend(tokeLeft)
+                print(currKeyword, hex(self.v2List[currKeyword]))
+                tokenizedLine.extend([self.v2List[currKeyword]])
+                tokenizedLine.extend(tokeRight)
+                tokenizedLine = [i for i in tokenizedLine if i!='']
+                return tokenizedLine
+        return self.__convertToList(line)
+
+    def __writeToOuputFile(self):
+        out = open(self.outfile, "wb")
+        entry,exit = self.memoryEntryPoint, self.memoryExitPoint
+        entryLocation,exitLocation = struct.pack('<H', entry), struct.pack('<H', exit)
+        location = entry
+        out.write(entryLocation)
+        for line in self.tokenizedContent:
+            binLine = self.__convertLineToBinary(line)
+            #print(binLine)
+            location = 2 + location + len(binLine)
+            binlocation = struct.pack('<H', location)
+            out.write(binlocation)
+            for i in binLine:
+                out.write(i)
+        out.write(exitLocation)
+
+    def __convertLineToBinary(self, lineTup):
+        lineNumber, lineContent = lineTup[0], lineTup[1]
+        binLineNumber, binLineContent = struct.pack('<H', int(lineNumber)), []
+        for i in range(len(lineContent)):
+            if(type(lineContent[i]) == str):
+                binLineContent.append(struct.pack('B', ord(lineContent[i])))
+                continue
+            binLineContent.append(struct.pack('B', (lineContent[i])))
+        binLineContent.insert(0,struct.pack('B',binLineNumber[1]))
+        binLineContent.insert(0,struct.pack('B',binLineNumber[0]))
+        binLineContent.append(b'\x00')
+        return(binLineContent)
+
+    def __stripLineNumber(self, line, contentLineNumber):
+        newline,num = '',''
+        split = 0
+        while (line[split].isnumeric()):
+            num += line[split]
+            split +=1    
+        newline+=line[split:]
+        if(not num):
+            print("\nCHOMP: Something went wrong. There is no line number present on line: " + str(contentLineNumber+1) + "\n")
+            exit()
+        newline = newline.strip()
+        return (num, newline)
             
-
     def __removeQuotedMaterial(self,line):
         flag = False
         newstr = ''
@@ -100,44 +168,8 @@ class tokenizer():
     def __removeEmptyStrings(string):
         return string!=""
 
-    def tokenizeLine(self, line):
-        line = line.upper()
-        onlyKeys = self.__removeQuotedMaterial(line)
-        tokenizedLine = []
-        if not line:
-            return ['']
-
-        if ("REM" in onlyKeys):
-            commentLine = self.__convertToList(onlyKeys.replace("REM",""))
-            tokenizedLine.extend([0x8F])
-            tokenizedLine.extend(commentLine)
-            return tokenizedLine
-        if (':' in onlyKeys):
-            split = line.index(':')
-            left, right = line[0:split], line[split+1:-1]
-            splitLeft, splitRight = self.tokenizeLine(left), self.tokenizeLine(right)
-            tokenizedLine.extend(splitLeft)
-            tokenizedLine.extend([ord(":")])
-            tokenizedLine.extend(splitRight)
-            tokenizedLine = [i for i in tokenizedLine if i!='']
-            return tokenizedLine
-
-        for i in range(len(self.keywords)):
-            currKeyword = self.keywords[i] 
-            if currKeyword in onlyKeys:
-                split = line.index(currKeyword)
-                left, right = line[0:split], line[split+len(currKeyword):]
-                tokeLeft, tokeRight = self.tokenizeLine(left), self.tokenizeLine(right)
-                tokenizedLine.extend(tokeLeft)
-                tokenizedLine.extend([self.tokens[i]])
-                tokenizedLine.extend(tokeRight)
-                tokenizedLine = [i for i in tokenizedLine if i!='']
-                return tokenizedLine
-        return self.__convertToList(line)
-
-
 def main():
-    t = tokenizer("../testingFiles/a9.bas","../testingFiles/a10.prg","f")
+    t = tokenizer("../testingFiles/hypno.bas","../testingFiles/hypno.prg","f")
     t.tokenize()
 if __name__ == "__main__":
     main()
