@@ -1,14 +1,11 @@
 import argparse,os,struct
 class tokenizer():
-    def __init__(self, infile:str, outfile:str, flags:dict=None):
-        if (flags is None):
-            self.flags = {'v':False,'o':False}
-        else:
-            self.flags = flags
+    def __init__(self, infile:str, outfile:str, overwrite=False, verbose=False):
+        self.overwrite = overwrite
+        self.verbose = verbose
         self.memory_entry_point, self.memory_exit_point = 0x0801, 0x0000
-
         try:
-            if (self.flags['v']):
+            if (self.verbose):
                 print("CHOMP64: Validating input filepath...")
             assert(self.__validate_in_file(infile)), "\nCHOMP64: Something went wrong. Please check your input filepath.\n"
         except Exception as e:
@@ -16,7 +13,7 @@ class tokenizer():
             exit()         
         
         try:
-            if (self.flags['v']):
+            if (self.verbose):
                 print("CHOMP64: Validating output filepath...")
             assert(self.__validate_out_file(outfile)), "\nCHOMP64: Something went wrong. Please check your output filepath.\n"
         except Exception as e:
@@ -61,7 +58,7 @@ class tokenizer():
     def __validate_out_file(self,file):
         res = ""
         path = os.path.join(os.getcwd(), file)
-        if (os.path.exists(path) and not self.flags['o']):
+        if (os.path.exists(path) and not self.overwrite):
             while (res.upper() != 'Y' and res.upper() != "N"):
                 res = input("\nCHOMP64: The output file currently exists. Would you like to overwrite it? (Y/N)  ")
                 print()
@@ -83,24 +80,24 @@ class tokenizer():
             if (not line.strip()):
                 continue
             
-            if (self.flags['v']):
+            if (self.verbose):
                 print("CHOMP64: Crunching line:\t" + line.strip())
             
             line_num,line_content = self.__strip_line_number(line, i)
             line_content = self.__tokenize_line(line_content)
             
-            if (self.flags['v']):
+            if (self.verbose):
                 print("CHOMP64: Tokens found:\t", self.line_tokens)
 
             self.line_tokens = []
             self.tokenized_content.append((line_num,line_content))
 
-        if (self.flags['v']):
+        if (self.verbose):
             print("CHOMP64: Tokenization successful, writing to output file...")
 
         self.__write_to_ouput_file()
 
-        if (self.flags['v']):
+        if (self.verbose):
             print("CHOMP64: Write successful")
 
 
@@ -110,7 +107,7 @@ class tokenizer():
         tokenized_line = []
 
         if ("REM" in line_no_quoted_material):
-            if (self.flags['v']):
+            if (self.verbose):
                 print("CHOMP64: Remarked line, continuing...")
             comment_line = self.__convert_to_list(line_no_quoted_material.replace("REM",""))
             tokenized_line.extend([0x8F])
@@ -119,7 +116,7 @@ class tokenizer():
             return tokenized_line
         
         if (':' in line_no_quoted_material):
-            if (self.flags['v']):
+            if (self.verbose):
                 print("CHOMP64: Multiple commands in line, splitting...")
             
             split = line.index(':')
@@ -230,6 +227,6 @@ if __name__ == "__main__":
     parser.add_argument("-v","--verbose", help="Display tokenizer steps", action='store_true')
     args=parser.parse_args()
 
-    t = tokenizer(args.inpath, args.outpath, {"o":args.overwrite, 'v':args.verbose})
+    t = tokenizer(args.inpath, args.outpath, overwrite=args.overwrite, verbose=args.verbose)
     t.tokenize()
     
