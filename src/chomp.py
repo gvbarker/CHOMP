@@ -114,7 +114,6 @@ class tokenizer():
         out.write(entryLocation)
         for line in self.tokenizedContent:
             binLine = self.__convertLineToBinary(line)
-            #print(binLine)
             location = 2 + location + len(binLine)
             binlocation = struct.pack('<H', location)
             out.write(binlocation)
