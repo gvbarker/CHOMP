@@ -2,12 +2,12 @@ import argparse,os,struct
 class tokenizer():
     def __init__(self, infile, outfile, flags):
         self.flags = flags
-        self.memoryEntryPoint, self.memoryExitPoint = 0x0801, 0x0000
+        self.memory_entry_point, self.memory_exit_point = 0x0801, 0x0000
 
         try:
             if (self.flags['v']):
                 print("CHOMP: Validating input filepath...")
-            assert(self.__validateInFile(infile)), "\nCHOMP: Something went wrong. Please check your input filepath.\n"
+            assert(self.__validate_in_file(infile)), "\nCHOMP: Something went wrong. Please check your input filepath.\n"
         except Exception as e:
             print(e)
             exit()         
@@ -15,17 +15,17 @@ class tokenizer():
         try:
             if (self.flags['v']):
                 print("CHOMP: Validating output filepath...")
-            assert(self.__validateOutFile(outfile)), "\nCHOMP: Something went wrong. Please check your output filepath.\n"
+            assert(self.__validate_out_file(outfile)), "\nCHOMP: Something went wrong. Please check your output filepath.\n"
         except Exception as e:
             print(e)
             exit()
         
         self.infile, self.outfile = os.path.join(os.getcwd(),infile), os.path.join(os.getcwd(), outfile)
-        self.originalContent = self.__fileContentSplitter()
-        self.tokenizedContent = []
-        self.lineTokens = []
+        self.original_content = self.__file_content_splitter()
+        self.tokenized_content = []
+        self.line_tokens = []
         
-        self.v2List = {"END": 0x80,"FOR": 0x81,"NEXT": 0x82,
+        self.v2_list = {"END": 0x80,"FOR": 0x81,"NEXT": 0x82,
                         "DATA": 0x83,"INPUT#": 0x84,"INPUT": 0x85,"DIM": 0x86,"READ": 0x87,
                         "LET": 0x88,"GOTO": 0x89,"RUN": 0x8A,"IF": 0x8B,"RESTORE": 0x8C,
                         "GOSUB": 0x8D,"RETURN": 0x8E,"STOP": 0x90,"ON": 0x91,"WAIT": 0x92,
@@ -42,145 +42,146 @@ class tokenizer():
                         "ASC": 0xC6,"CHR$": 0xC7,"LEFT$": 0xC8,"RIGHT$": 0xC9,"MID$": 0xCA,
                         "GO": 0xCB,"INT": 0xB5} 
         
-        self.keywords= list(self.v2List.keys())
-        self.tokens= list(self.v2List.values())
+        self.keywords= list(self.v2_list.keys())
+        self.tokens= list(self.v2_list.values())
 
-    def __validateInFile(self,file):
+    def __validate_in_file(self,file):
         path = os.path.join(os.getcwd(), file)
-        correctPathAndFile = (os.path.exists(path) and os.path.isfile(path))
-        correctExt = (file[-4:] == ".bas")
+        correct_path_and_file = (os.path.exists(path) and os.path.isfile(path))
+        correct_extension = (file[-4:] == ".bas")
         
-        if(correctExt and correctPathAndFile):
+        if(correct_extension and correct_path_and_file):
             return True
         
         return False
 
-    def __validateOutFile(self,file):
+    def __validate_out_file(self,file):
         res = ""
         path = os.path.join(os.getcwd(), file)
         if (os.path.exists(path) and not self.flags['o']):
-            while (not res.upper() == 'Y' and not res.upper() == "N"):
+            while (res.upper() != 'Y' and res.upper() != "N"):
                 res = input("\nCHOMP: The output file currently exists. Would you like to overwrite it? (Y/N)  ")
                 print()
             
-            if (res.upper() == 'Y'):
-                return True
-            print("CHOMP: Please enter a new output file.\n")
-            exit()
+            if (res.upper() == 'N'):
+                print("CHOMP: Please enter a new output file.\n")
+                exit()
 
         return True
 
-    def __fileContentSplitter(self):
-        file = open(self.infile, 'r')
-        contents = file.readlines()
+    def __file_content_splitter(self):
+        input_file = open(self.infile, 'r')
+        contents = input_file.readlines()
         return contents
 
     def tokenize(self):
-        for i in range(len(self.originalContent)):
-            if(not self.originalContent[i].strip()):
+        for i in range(len(self.original_content)):
+            line = self.original_content[i]
+            if(not line.strip()):
                 continue
             
             if(self.flags['v']):
-                print("CHOMP: Crunching line:\t" + self.originalContent[i].strip())
+                print("CHOMP: Crunching line:\t" + line.strip())
             
-            lineNum,lineContent = self.__stripLineNumber(self.originalContent[i], i)
-            lineContent = self.__tokenizeLine(lineContent)
+            line_num,line_content = self.__strip_line_number(line, i)
+            line_content = self.__tokenize_line(line_content)
             
             if(self.flags['v']):
-                print("CHOMP: Tokens found:\t", self.lineTokens)
-            self.lineTokens = []
-            self.tokenizedContent.append((lineNum,lineContent))
+                print("CHOMP: Tokens found:\t", self.line_tokens)
+
+            self.line_tokens = []
+            self.tokenized_content.append((line_num,line_content))
 
         if(self.flags['v']):
             print("CHOMP: Tokenization successful, writing to output file...")
 
-        self.__writeToOuputFile()
+        self.__write_to_ouput_file()
 
         if(self.flags['v']):
             print("CHOMP: Write successful")
 
 
-    def __tokenizeLine(self, line):
+    def __tokenize_line(self, line):
         line = line.upper()
-        noQuotedMaterial = self.__removeQuotedMaterial(line)
-        tokenizedLine = []
+        line_no_quoted_material = self.__remove_quoted_material(line)
+        tokenized_line = []
 
-        if ("REM" in noQuotedMaterial):
+        if ("REM" in line_no_quoted_material):
             if(self.flags['v']):
                 print("CHOMP: Remarked line, continuing...")
-            commentLine = self.__convertToList(noQuotedMaterial.replace("REM",""))
-            tokenizedLine.extend([0x8F])
-            tokenizedLine.extend(commentLine)
-            self.lineTokens.append("REM")
-            return tokenizedLine
+            comment_line = self.__convert_to_list(line_no_quoted_material.replace("REM",""))
+            tokenized_line.extend([0x8F])
+            tokenized_line.extend(comment_line)
+            self.line_tokens.append("REM")
+            return tokenized_line
         
-        if (':' in noQuotedMaterial):
+        if (':' in line_no_quoted_material):
             if(self.flags['v']):
                 print("CHOMP: Multiple commands in line, splitting...")
             
             split = line.index(':')
             left, right = line[0:split], line[split+1:]
-            splitLeft, splitRight = self.__tokenizeLine(left), self.__tokenizeLine(right)
+            split_left, split_right = self.__tokenize_line(left), self.__tokenize_line(right)
 
-            tokenizedLine.extend(splitLeft)
-            tokenizedLine.extend([ord(":")])
-            tokenizedLine.extend(splitRight)
+            tokenized_line.extend(split_left)
+            tokenized_line.extend([ord(":")])
+            tokenized_line.extend(split_right)
 
-            tokenizedLine = [i for i in tokenizedLine if i!='']
-            return tokenizedLine
+            tokenized_line = [i for i in tokenized_line if i!='']
+            return tokenized_line
 
         for i in range(len(self.keywords)):
-            currKeyword = self.keywords[i]
+            current_keyword = self.keywords[i]
 
-            if currKeyword in noQuotedMaterial:
-                split = line.index(currKeyword)
-                self.lineTokens.append(currKeyword)
+            if current_keyword in line_no_quoted_material:
+                split = line.index(current_keyword)
+                self.line_tokens.append(current_keyword)
                 
-                left, right = line[0:split], line[split+len(currKeyword):]
-                tokeLeft, tokeRight = self.__tokenizeLine(left), self.__tokenizeLine(right)
+                left, right = line[0:split], line[split+len(current_keyword):]
+                tokenized_line_left, tokenized_line_right = self.__tokenize_line(left), self.__tokenize_line(right)
 
-                tokenizedLine.extend(tokeLeft)
-                tokenizedLine.extend([self.v2List[currKeyword]])
-                tokenizedLine.extend(tokeRight)
+                tokenized_line.extend(tokenized_line_left)
+                tokenized_line.extend([self.v2_list[current_keyword]])
+                tokenized_line.extend(tokenized_line_right)
 
-                tokenizedLine = [i for i in tokenizedLine if i!='']
-                return tokenizedLine
+                tokenized_line = [i for i in tokenized_line if i!='']
+                return tokenized_line
             
-        return self.__convertToList(line)
+        return self.__convert_to_list(line)
 
-    def __writeToOuputFile(self):
+    def __write_to_ouput_file(self):
         out = open(self.outfile, "wb")
-        entry,exit = self.memoryEntryPoint, self.memoryExitPoint
-        entryLocation,exitLocation = struct.pack('<H', entry), struct.pack('<H', exit)
-        location = entry
-        out.write(entryLocation)
+        entry_point, exit_point = self.memory_entry_point, self.memory_exit_point
+        packed_entry_point,packed_exit_location = struct.pack('<H', entry_point), struct.pack('<H', exit_point)
+        location = entry_point
+        out.write(packed_entry_point)
 
-        for line in self.tokenizedContent:
-            binLine = self.__convertLineToBinary(line)
-            location = 2 + location + len(binLine)
-            binlocation = struct.pack('<H', location)
-            out.write(binlocation)
-            for i in binLine:
+        for line in self.tokenized_content:
+            binary_line = self.__convert_line_to_binary(line)
+            location = 2 + location + len(binary_line)
+            packed_location = struct.pack('<H', location)
+            out.write(packed_location)
+            for i in binary_line:
                 out.write(i)
 
-        out.write(exitLocation)
+        out.write(packed_exit_location)
 
-    def __convertLineToBinary(self, lineTup):
-        lineNumber, lineContent = lineTup[0], lineTup[1]
-        binLineNumber, binLineContent = struct.pack('<H', int(lineNumber)), []
+    def __convert_line_to_binary(self, line_tuple):
+        line_number, line_content = line_tuple[0], line_tuple[1]
+        binary_line_number, binary_line_content = struct.pack('<H', int(line_number)), []
 
-        for i in range(len(lineContent)):
-            if(type(lineContent[i]) == str):
-                binLineContent.append(struct.pack('B', ord(lineContent[i])))
+        for i in range(len(line_content)):
+            if(type(line_content[i]) == str):
+                binary_line_content.append(struct.pack('B', ord(line_content[i])))
                 continue
-            binLineContent.append(struct.pack('B', (lineContent[i])))
+            binary_line_content.append(struct.pack('B', (line_content[i])))
 
-        binLineContent.insert(0,struct.pack('B',binLineNumber[1]))
-        binLineContent.insert(0,struct.pack('B',binLineNumber[0]))
-        binLineContent.append(b'\x00')
-        return(binLineContent)
+        binary_line_content.insert(0,struct.pack('B',binary_line_number[1]))
+        binary_line_content.insert(0,struct.pack('B',binary_line_number[0]))
+        binary_line_content.append(b'\x00')
+        return binary_line_content
 
-    def __stripLineNumber(self, line, contentLineNumber):
+    def __strip_line_number(self, line, content_line_number):
         newline,num = '',''
         split = 0
 
@@ -190,18 +191,18 @@ class tokenizer():
         newline+=line[split:]
 
         if(not num):
-            print("\nCHOMP: Something went wrong. There is no line number present on line: " + str(contentLineNumber+1) + "\n")
+            print("\nCHOMP: Something went wrong. There is no line number present on line: " + str(content_line_number+1) + "\n")
             exit()
 
         newline = newline.strip()
         return (num, newline)
             
-    def __removeQuotedMaterial(self,line):
+    def __remove_quoted_material(self,line):
         flag = False
         newstr = ''
 
         for char in line:
-            if (not flag and not char == '\"'):
+            if (not flag and char != '\"'):
                 newstr += char
 
             if(char=='\"'):
@@ -209,7 +210,7 @@ class tokenizer():
 
         return newstr                
 
-    def __convertToList(self, line):
+    def __convert_to_list(self, line):
         lineaslist = []
         lineaslist[:0]=line
 
