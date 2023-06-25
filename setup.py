@@ -1,8 +1,7 @@
 from setuptools import setup
-
 setup(
     name='chomp64',
-    version='2.0.2',
+    version='2.1.2',
     description='v2 BASIC Tokenizer',
     url='https://github.com/gvbarker/CHOMP',
     author='Giancarlo Barker',

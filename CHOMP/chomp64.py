@@ -1,21 +1,24 @@
 import argparse,os,struct
 class tokenizer():
-    def __init__(self, infile, outfile, flags):
-        self.flags = flags
+    def __init__(self, infile, outfile, flags=None):
+        if (flags is None):
+            flags = {'v':False,'o':False}
+        else:
+            self.flags = flags
         self.memory_entry_point, self.memory_exit_point = 0x0801, 0x0000
 
         try:
             if (self.flags['v']):
-                print("CHOMP: Validating input filepath...")
-            assert(self.__validate_in_file(infile)), "\nCHOMP: Something went wrong. Please check your input filepath.\n"
+                print("CHOMP64: Validating input filepath...")
+            assert(self.__validate_in_file(infile)), "\nCHOMP64: Something went wrong. Please check your input filepath.\n"
         except Exception as e:
             print(e)
             exit()         
         
         try:
             if (self.flags['v']):
-                print("CHOMP: Validating output filepath...")
-            assert(self.__validate_out_file(outfile)), "\nCHOMP: Something went wrong. Please check your output filepath.\n"
+                print("CHOMP64: Validating output filepath...")
+            assert(self.__validate_out_file(outfile)), "\nCHOMP64: Something went wrong. Please check your output filepath.\n"
         except Exception as e:
             print(e)
             exit()
@@ -60,11 +63,11 @@ class tokenizer():
         path = os.path.join(os.getcwd(), file)
         if (os.path.exists(path) and not self.flags['o']):
             while (res.upper() != 'Y' and res.upper() != "N"):
-                res = input("\nCHOMP: The output file currently exists. Would you like to overwrite it? (Y/N)  ")
+                res = input("\nCHOMP64: The output file currently exists. Would you like to overwrite it? (Y/N)  ")
                 print()
             
             if (res.upper() == 'N'):
-                print("CHOMP: Please enter a new output file.\n")
+                print("CHOMP64: Please enter a new output file.\n")
                 exit()
 
         return True
@@ -81,24 +84,24 @@ class tokenizer():
                 continue
             
             if (self.flags['v']):
-                print("CHOMP: Crunching line:\t" + line.strip())
+                print("CHOMP64: Crunching line:\t" + line.strip())
             
             line_num,line_content = self.__strip_line_number(line, i)
             line_content = self.__tokenize_line(line_content)
             
             if (self.flags['v']):
-                print("CHOMP: Tokens found:\t", self.line_tokens)
+                print("CHOMP64: Tokens found:\t", self.line_tokens)
 
             self.line_tokens = []
             self.tokenized_content.append((line_num,line_content))
 
         if (self.flags['v']):
-            print("CHOMP: Tokenization successful, writing to output file...")
+            print("CHOMP64: Tokenization successful, writing to output file...")
 
         self.__write_to_ouput_file()
 
         if (self.flags['v']):
-            print("CHOMP: Write successful")
+            print("CHOMP64: Write successful")
 
 
     def __tokenize_line(self, line):
@@ -108,7 +111,7 @@ class tokenizer():
 
         if ("REM" in line_no_quoted_material):
             if (self.flags['v']):
-                print("CHOMP: Remarked line, continuing...")
+                print("CHOMP64: Remarked line, continuing...")
             comment_line = self.__convert_to_list(line_no_quoted_material.replace("REM",""))
             tokenized_line.extend([0x8F])
             tokenized_line.extend(comment_line)
@@ -117,7 +120,7 @@ class tokenizer():
         
         if (':' in line_no_quoted_material):
             if (self.flags['v']):
-                print("CHOMP: Multiple commands in line, splitting...")
+                print("CHOMP64: Multiple commands in line, splitting...")
             
             split = line.index(':')
             left, right = line[0:split], line[split+1:]
@@ -191,7 +194,7 @@ class tokenizer():
         newline+=line[split:]
 
         if (not num):
-            print("\nCHOMP: Something went wrong. There is no line number present on line: " + str(content_line_number+1) + "\n")
+            print("\nCHOMP64: Something went wrong. There is no line number present on line: " + str(content_line_number+1) + "\n")
             exit()
 
         newline = newline.strip()
