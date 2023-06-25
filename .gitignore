@@ -1,3 +1,5 @@
-chomp.exe
 *.prg
 *.d64
+*.egg-info/
+dist/*
+build/*

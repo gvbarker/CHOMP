@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='chomp',
-    version='1.1.2',
+    version='2.0.2',
     description='v2 BASIC Tokenizer',
     url='https://github.com/gvbarker/CHOMP',
     author='Giancarlo Barker',
