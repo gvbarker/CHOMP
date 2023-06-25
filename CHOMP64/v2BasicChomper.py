@@ -1,8 +1,8 @@
 import argparse,os,struct
 class tokenizer():
-    def __init__(self, infile, outfile, flags=None):
+    def __init__(self, infile:str, outfile:str, flags:dict=None):
         if (flags is None):
-            flags = {'v':False,'o':False}
+            self.flags = {'v':False,'o':False}
         else:
             self.flags = flags
         self.memory_entry_point, self.memory_exit_point = 0x0801, 0x0000

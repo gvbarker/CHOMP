@@ -7,7 +7,7 @@ setup(
     author='Giancarlo Barker',
     author_email='jonzomb80@gmail.com',
     license='MIT',
-    packages=['chomp'],
+    packages=['chomp64'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Education',
