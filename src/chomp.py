@@ -1,4 +1,4 @@
-import os,struct
+import argparse,sys,os,struct
 class tokenizer():
     def __init__(self, infile, outfile, flags):
         self.flags = flags
@@ -164,11 +164,12 @@ class tokenizer():
             lineaslist[i] = line[i]
         return lineaslist
 
-    def __removeEmptyStrings(string):
-        return string!=""
-
-def main():
-    t = tokenizer("../testingFiles/hypno.bas","../testingFiles/hypno.prg","f")
-    t.tokenize()
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("inpath", help="Path to desired input file (*.bas)")
+    parser.add_argument("outpath", help="Path to desired output file (*.prg)")
+    parser.add_argument("-o","--overwrite", help="Overwrite output file, if it exists", action='store_true')
+    parser.add_argument("-v","--verbose", help="Display tokenizer steps", action='store_true')
+    args=parser.parse_args()
+    t = tokenizer(args.inpath, args.outpath, {"o":args.overwrite, 'v':args.verbose})
+    
