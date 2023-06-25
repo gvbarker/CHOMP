@@ -1,21 +1,21 @@
 import argparse,os,struct
 class tokenizer():
-    def __init__(self, infile, outfile, flags):
-        self.flags = flags
+    def __init__(self, infile:str, outfile:str, overwrite=False, verbose=False):
+        self.overwrite = overwrite
+        self.verbose = verbose
         self.memory_entry_point, self.memory_exit_point = 0x0801, 0x0000
-
         try:
-            if (self.flags['v']):
-                print("CHOMP: Validating input filepath...")
-            assert(self.__validate_in_file(infile)), "\nCHOMP: Something went wrong. Please check your input filepath.\n"
+            if (self.verbose):
+                print("CHOMP64: Validating input filepath...")
+            assert(self.__validate_in_file(infile)), "\nCHOMP64: Something went wrong. Please check your input filepath.\n"
         except Exception as e:
             print(e)
             exit()         
         
         try:
-            if (self.flags['v']):
-                print("CHOMP: Validating output filepath...")
-            assert(self.__validate_out_file(outfile)), "\nCHOMP: Something went wrong. Please check your output filepath.\n"
+            if (self.verbose):
+                print("CHOMP64: Validating output filepath...")
+            assert(self.__validate_out_file(outfile)), "\nCHOMP64: Something went wrong. Please check your output filepath.\n"
         except Exception as e:
             print(e)
             exit()
@@ -50,7 +50,7 @@ class tokenizer():
         correct_path_and_file = (os.path.exists(path) and os.path.isfile(path))
         correct_extension = (file[-4:] == ".bas")
         
-        if(correct_extension and correct_path_and_file):
+        if (correct_extension and correct_path_and_file):
             return True
         
         return False
@@ -58,13 +58,13 @@ class tokenizer():
     def __validate_out_file(self,file):
         res = ""
         path = os.path.join(os.getcwd(), file)
-        if (os.path.exists(path) and not self.flags['o']):
+        if (os.path.exists(path) and not self.overwrite):
             while (res.upper() != 'Y' and res.upper() != "N"):
-                res = input("\nCHOMP: The output file currently exists. Would you like to overwrite it? (Y/N)  ")
+                res = input("\nCHOMP64: The output file currently exists. Would you like to overwrite it? (Y/N)  ")
                 print()
             
             if (res.upper() == 'N'):
-                print("CHOMP: Please enter a new output file.\n")
+                print("CHOMP64: Please enter a new output file.\n")
                 exit()
 
         return True
@@ -77,28 +77,28 @@ class tokenizer():
     def tokenize(self):
         for i in range(len(self.original_content)):
             line = self.original_content[i]
-            if(not line.strip()):
+            if (not line.strip()):
                 continue
             
-            if(self.flags['v']):
-                print("CHOMP: Crunching line:\t" + line.strip())
+            if (self.verbose):
+                print("CHOMP64: Crunching line:\t" + line.strip())
             
             line_num,line_content = self.__strip_line_number(line, i)
             line_content = self.__tokenize_line(line_content)
             
-            if(self.flags['v']):
-                print("CHOMP: Tokens found:\t", self.line_tokens)
+            if (self.verbose):
+                print("CHOMP64: Tokens found:\t", self.line_tokens)
 
             self.line_tokens = []
             self.tokenized_content.append((line_num,line_content))
 
-        if(self.flags['v']):
-            print("CHOMP: Tokenization successful, writing to output file...")
+        if (self.verbose):
+            print("CHOMP64: Tokenization successful, writing to output file...")
 
         self.__write_to_ouput_file()
 
-        if(self.flags['v']):
-            print("CHOMP: Write successful")
+        if (self.verbose):
+            print("CHOMP64: Write successful")
 
 
     def __tokenize_line(self, line):
@@ -107,8 +107,8 @@ class tokenizer():
         tokenized_line = []
 
         if ("REM" in line_no_quoted_material):
-            if(self.flags['v']):
-                print("CHOMP: Remarked line, continuing...")
+            if (self.verbose):
+                print("CHOMP64: Remarked line, continuing...")
             comment_line = self.__convert_to_list(line_no_quoted_material.replace("REM",""))
             tokenized_line.extend([0x8F])
             tokenized_line.extend(comment_line)
@@ -116,8 +116,8 @@ class tokenizer():
             return tokenized_line
         
         if (':' in line_no_quoted_material):
-            if(self.flags['v']):
-                print("CHOMP: Multiple commands in line, splitting...")
+            if (self.verbose):
+                print("CHOMP64: Multiple commands in line, splitting...")
             
             split = line.index(':')
             left, right = line[0:split], line[split+1:]
@@ -171,7 +171,7 @@ class tokenizer():
         binary_line_number, binary_line_content = struct.pack('<H', int(line_number)), []
 
         for i in range(len(line_content)):
-            if(type(line_content[i]) == str):
+            if (type(line_content[i]) == str):
                 binary_line_content.append(struct.pack('B', ord(line_content[i])))
                 continue
             binary_line_content.append(struct.pack('B', (line_content[i])))
@@ -190,8 +190,8 @@ class tokenizer():
             split +=1    
         newline+=line[split:]
 
-        if(not num):
-            print("\nCHOMP: Something went wrong. There is no line number present on line: " + str(content_line_number+1) + "\n")
+        if (not num):
+            print("\nCHOMP64: Something went wrong. There is no line number present on line: " + str(content_line_number+1) + "\n")
             exit()
 
         newline = newline.strip()
@@ -205,7 +205,7 @@ class tokenizer():
             if (not flag and char != '\"'):
                 newstr += char
 
-            if(char=='\"'):
+            if (char=='\"'):
                 flag = not flag 
 
         return newstr                
@@ -227,6 +227,6 @@ if __name__ == "__main__":
     parser.add_argument("-v","--verbose", help="Display tokenizer steps", action='store_true')
     args=parser.parse_args()
 
-    t = tokenizer(args.inpath, args.outpath, {"o":args.overwrite, 'v':args.verbose})
+    t = tokenizer(args.inpath, args.outpath, overwrite=args.overwrite, verbose=args.verbose)
     t.tokenize()
     
