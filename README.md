@@ -15,7 +15,8 @@ pip intall chomp64
 from chomp64 import v2BasicChomper
 
 #initializes tokenizer object
-var = v2BasicChomper.Tokenizer("path/to/input/file", "path/to/ouput/file")  #optional parameters: verbose: Bool, overwrite: Bool
+var = v2BasicChomper.Tokenizer("path/to/input/file", "path/to/ouput/file")  
+#optional parameters: verbose: Bool, overwrite: Bool
 
 #generates .prg output file at specified path
 var.Tokenize()
