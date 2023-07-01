@@ -109,9 +109,12 @@ class tokenizer():
         if ("REM" in line_no_quoted_material):
             if (self.verbose):
                 print("CHOMP64: Remarked line, continuing...")
-            comment_line = self.__convert_to_list(line_no_quoted_material.replace("REM",""))
+            split = line.index("REM")
+            left, comment_line = line[0:split],line[split+3:]
+            tokenized_line_left, comment_line_list = self.__tokenize_line(left), self.__convert_to_list(comment_line) 
+            tokenized_line.extend(tokenized_line_left)
             tokenized_line.extend([0x8F])
-            tokenized_line.extend(comment_line)
+            tokenized_line.extend(comment_line_list)
             self.line_tokens.append("REM")
             return tokenized_line
         
@@ -121,11 +124,11 @@ class tokenizer():
             
             split = line.index(':')
             left, right = line[0:split], line[split+1:]
-            split_left, split_right = self.__tokenize_line(left), self.__tokenize_line(right)
+            tokenized_line_left, tokenized_line_right = self.__tokenize_line(left), self.__tokenize_line(right)
 
-            tokenized_line.extend(split_left)
+            tokenized_line.extend(tokenized_line_left)
             tokenized_line.extend([ord(":")])
-            tokenized_line.extend(split_right)
+            tokenized_line.extend(tokenized_line_right)
 
             tokenized_line = [i for i in tokenized_line if i!='']
             return tokenized_line
